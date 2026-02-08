@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell
+  Tooltip, ResponsiveContainer, BarChart, Bar, Cell
 } from 'recharts';
 import { Activity, TrendingDown, DollarSign, Award, Plus, FileText, ClipboardList } from 'lucide-react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
