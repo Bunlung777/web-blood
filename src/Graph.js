@@ -3,7 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, BarChart, Bar, Cell
 } from 'recharts';
-import { Activity, TrendingDown, Plus, FileText, ClipboardList } from 'lucide-react';
+import { Activity, TrendingDown, FileText, ClipboardList } from 'lucide-react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, getDocs,setDoc,doc,serverTimestamp } from 'firebase/firestore';
 import { firebaseConfig } from './firebase';

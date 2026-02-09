@@ -8,7 +8,6 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Government from './government';
 import Home from './Home';
-const root = ReactDOM.createRoot(document.getElementById('root'));
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <Routes>
