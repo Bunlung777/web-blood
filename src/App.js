@@ -1,438 +1,348 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { FileText, ChevronLeft, ChevronRight, MoreHorizontal, ArrowUpRight,ArrowLeft,Home,LayoutGrid } from 'lucide-react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, BarChart, Bar, Cell
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  LabelList
 } from 'recharts';
-import { Activity, TrendingDown, Plus, FileText, ClipboardList } from 'lucide-react';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, collection, getDocs,setDoc,doc,serverTimestamp } from 'firebase/firestore';
-import { firebaseConfig } from './firebase';
-
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { useNavigate } from "react-router-dom";
 const App = () => {
-  const [data, setData] = useState([]);
-  const [selectedTest, setSelectedTest] = useState('HbA1C');
-  const [openModal, setOpenModal] = useState(false);
-const [form, setForm] = useState({
-  year: '',
-  kpi: '',
-  repeat: '',
-  total: '',
-  cost: '',
-  totalCost: '',
-});
-const handleChange = e => {
-  setForm({ ...form, [e.target.name]: e.target.value });
-};
-const totalCost = (Number(form.cost) || 0) * (Number(form.repeat) || 0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const navigate = useNavigate();
+const mockIndicators = [
+  {
+    id: '26.1',
+    name: 'ร้อยละของผู้ป่วยโรคเบาหวาน ได้รับการตรวจ HbA1c ซ้ำภายใน 90 วัน',
+    target: 'ไม่เกินร้อยละ 5',
+    result: 'ร้อยละ 3.65',
+  },
+  {
+    id: '26.2',
+    name: 'ร้อยละของผู้ป่วยโรคเบาหวาน ได้รับการตรวจ LDL-Cholesterol ซ้ำภายใน 90 วัน',
+    target: 'ไม่เกินร้อยละ 5',
+    result: 'ร้อยละ 2.91',
+  },
+  {
+    id: '26.3',
+    name: 'ร้อยละของผู้ป่วยโรคเบาหวาน ได้รับการตรวจ HbA1c อย่างน้อยปีละ 1 ครั้ง',
+    target: 'มากกว่าร้อยละ 70',
+    result: 'ร้อยละ 56.39',
+  },
+  {
+    id: '26.4',
+    name: 'ร้อยละของผู้ป่วยโรคเบาหวาน ได้รับการตรวจ LDL-Cholesterol อย่างน้อยปีละ 1 ครั้ง',
+    target: 'มากกว่าร้อยละ 70',
+    result: 'ร้อยละ 55.90',
+  },
+  {
+    id: '26.5',
+    name: 'ร้อยละของผู้ป่วยโรคเบาหวาน ได้รับการตรวจ Creatinine อย่างน้อยปีละ 1 ครั้ง',
+    target: 'มากกว่าร้อยละ 70',
+    result: 'ร้อยละ 69.52',
+  },
+  {
+    id: '26.6',
+    name: 'ร้อยละของผู้มารับบริการ ได้รับการตรวจ Total Cholesterol ซ้ำภายใน 90 วัน',
+    target: 'ไม่เกินร้อยละ 5',
+    result: 'ร้อยละ 2.73',
+  },
+  {
+    id: '26.7',
+    name: 'ร้อยละของผู้มารับบริการ ได้รับการตรวจ Triglycerides ซ้ำภายใน 90 วัน',
+    target: 'ไม่เกินร้อยละ 5',
+    result: 'ร้อยละ 3.02',
+  },
+];
+const chartData = [
+  {
+    name: 'HbA1c ซ้ำ 90 วัน',
+    total: 7218,
+    used: 265,
+    percent: 3.67,
+  },
+  {
+    name: 'LDL ซ้ำ 90 วัน',
+    total: 6946,
+    used: 200,
+    percent: 2.88,
+  },
+  {
+    name: 'Cholesterol ซ้ำ 90 วัน',
+    total: 11528,
+    used: 310,
+    percent: 2.69,
+  },
+  {
+    name: 'Triglyceride ซ้ำ 90 วัน',
+    total: 11557,
+    used: 334,
+    percent: 2.89,
+  },
+  {
+    name: 'HbA1c ปีละ 1 ครั้ง',
+    total: 9887,
+    used: 5799,
+    percent: 58.65,
+  },
+  {
+    name: 'LDL ปีละ 1 ครั้ง',
+    total: 9887,
+    used: 5776,
+    percent: 58.42,
+  },
+  {
+    name: 'Creatinine ปีละ 1 ครั้ง',
+    total: 9887,
+    used: 7083,
+    percent: 71.64,
+  },
+];
 
 
-  useEffect(() => {
-    const load = async () => {
-      const hospitalId = 'loei';
-      const testsSnap = await getDocs(
-        collection(db, 'hospitals', hospitalId, 'tests')
-      );
 
-      const all = [];
+  // คำนวณข้อมูลสำหรับหน้าปัจจุบัน
+  const totalPages = Math.ceil(mockIndicators.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentTestData = mockIndicators.slice(startIndex, endIndex);
 
-      for (const t of testsSnap.docs) {
-        const yearsSnap = await getDocs(
-          collection(db, 'hospitals', hospitalId, 'tests', t.id, 'years')
-        );
-
-        all.push({
-          test: t.id,
-          years: yearsSnap.docs
-            .map(y => ({ year: y.id, ...y.data() }))
-            .sort((a, b) => Number(a.year) - Number(b.year)),
-        });
-      }
-
-      setData(all);
-    };
-
-    load();
-  }, []);
-const saveYearData = async () => {
-  const hospitalId = "loei";
-  const testId = selectedTest;
-  const yearId = form.year;
-
-  await setDoc(
-    doc(db, "hospitals", hospitalId, "tests", testId, "years", yearId),
-    {
-      kpi: Number(form.kpi),
-      repeat: Number(form.repeat),
-      total: Number(form.total),
-      cost: Number(form.cost),
-      totalCost: Number(form.totalCost),
-      createdAt: serverTimestamp(), 
+  // ฟังก์ชันสำหรับเปลี่ยนหน้า
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
     }
-  );
+  };
 
-  setOpenModal(false);
-};
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
-  const currentTestData = useMemo(() => {
-    return data.find(d => d.test === selectedTest)?.years ?? [];
-  }, [data, selectedTest]);
-  console.log("Current Test Data:", currentTestData);
+  const goToPage = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
-  const kpiImprovement = useMemo(() => {
-    if (currentTestData.length < 2) return null;
-    const latest = currentTestData.at(-1);
-    const prev = currentTestData.at(-2);
-    return ((prev.kpi - latest.kpi) / prev.kpi) * 100;
-  }, [currentTestData]);
-
-console.log("cuerrentTestData:", currentTestData);
-
-const currentYear = new Date().getFullYear() + 543;
-const yearList = Array.from({ length: 5 }, (_, i) => currentYear + i);
 return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-kanit">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-[#5bafeb] p-2 rounded-lg text-white">
-              <ClipboardList size={24} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">แดชบอร์ดสรุปตัวชี้วัด (KPI)</h1>
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">รายงานการตรวจซ้ำและต้นทุน ปี 2563 - 2567</p>
-            </div>
-          </div>
-          
+
+    <div className="flex flex-col items-center p-4 md:p-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 min-h-screen font-kanit gap-6">
+      
+      {/* ===== Top Navigation Bar ===== */}
+      <div className="max-w-6xl w-full flex flex-col md:flex-row justify-between items-center gap-4 mb-2">
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setOpenModal(true)}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#5bafeb] hover:bg-[#4a9de0] text-white rounded-lg font-bold shadow-sm transition-all text-sm"
+            onClick={() => navigate("/")}
+            className="p-2.5 bg-white rounded-2xl shadow-sm border border-slate-200 text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-all active:scale-95"
           >
-            <Plus size={18} />
-            เพิ่มข้อมูล
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-slate-800">ตัวชี้วัดโรงพยาบาล</h1>
+            <p className="text-xs text-slate-500">RLU Dashboard / Hospital Indicators</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 bg-white/60 p-1.5 rounded-2xl border border-white/80 shadow-sm">
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:bg-white hover:text-slate-800 rounded-xl transition-all text-sm font-medium"
+          >
+            <Home size={16} />
+            <span>หน้าแรก</span>
+          </button>
+          <div className="w-[1px] h-4 bg-slate-300 mx-1"></div>
+          <button
+            onClick={() => navigate("/Government")}
+            className="flex items-center gap-2 bg-[#5bafeb] px-4 py-2 rounded-xl shadow-md shadow-[#5bafeb] text-white hover:bg-[#4a90e2] transition-all active:scale-95 text-sm font-semibold"
+          >
+            <LayoutGrid size={16} />
+            <span>ตัวชี้วัดราชการ</span>
           </button>
         </div>
       </div>
-</header>
 
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
-      
-<div className="overflow-x-auto pb-2">
-          <div className="flex gap-2 p-1 bg-white/60 backdrop-blur-md rounded-2xl border border-slate-200 w-max mx-auto shadow-sm">
-            {data.length > 0 ? data.map(item => (
-              <button
-                key={item.test}
-                onClick={() => setSelectedTest(item.test)}
-                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
-                  selectedTest === item.test
-                    ? 'bg-white text-indigo-600 shadow-md ring-1 ring-slate-100'
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'
-                }`}
-              >
-                {selectedTest === item.test && <Activity size={16} className="animate-pulse" />}
-                {item.test}
-              </button>
-            )) : (
-              <span className="px-6 py-2 text-sm text-slate-400">กำลังโหลดข้อมูล...</span>
-            )}
+      {/* --- Section 1: Chart Card --- */}
+      <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200/60 max-w-6xl w-full p-6 md:p-10 backdrop-blur-sm relative overflow-hidden">
+        {/* ตกแต่งพื้นหลังเล็กน้อย */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
+        
+        <div className="mb-10 relative">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-1 h-6 bg-[#5bafeb] rounded-full"></div>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800">สรุปการตรวจห้องปฏิบัติการ</h2>
           </div>
+          <p className="text-sm text-slate-500 ml-4">วิเคราะห์เปรียบเทียบสัดส่วนการตรวจซ้ำภายในระยะเวลา 90 วัน</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <StatCard 
-            title="ค่า KPI ประจำปีล่าสุด" 
-            value={`${currentTestData.at(-1)?.kpi?.toFixed(2) ?? '—'}%`} 
-            icon={<Activity size={20} className="text-blue-700" />} 
-            trend={`เปรียบเทียบปีก่อน: ${kpiImprovement?.toFixed(2)}%`} 
-            trendValue={kpiImprovement}
-          />
-          <StatCard 
-            title="จำนวนตรวจซ้ำ" 
-            value={currentTestData.at(-1)?.repeat?.toLocaleString() ?? '—'} 
-            icon={<TrendingDown size={20} className="text-slate-500" />} 
-            subValue={`จากทั้งหมด ${currentTestData.at(-1)?.total?.toLocaleString() ?? '—'} ครั้ง`}
-          />
-          <StatCard 
-            title="งบประมาณที่ใช้" 
-            value={`฿${currentTestData.at(-1)?.cost?.toLocaleString() ?? '—'}`} 
-          />
-          <StatCard 
-            title="สถานะการประเมิน" 
-            value="ผ่านเกณฑ์"
-            subValue={`เป้สหมาย < 5.0%`}
-          />
+        <div className="h-[400px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart layout="vertical" data={chartData} margin={{ top: 5, right: 60, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+              <XAxis type="number" hide domain={[0, 100]} />
+              <YAxis 
+                dataKey="name" 
+                type="category" 
+                width={140}
+                tick={{ fontSize: 13, fill: '#475569', fontWeight: 600 }}
+              />
+              <Tooltip 
+                cursor={{ fill: '#f8fafc', radius: 8 }}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-white p-4 border border-slate-100 shadow-2xl rounded-2xl">
+                        <p className="font-bold text-slate-800 mb-2 border-b pb-1">{data.name}</p>
+                        <p className="text-[#5bafeb] font-bold text-lg">{data.percent}%</p>
+                        <p className="text-slate-400 text-xs mt-1 leading-relaxed">
+                          ปริมาณการใช้: {data.used.toLocaleString()} ครั้ง<br/>
+                          จากทั้งหมด: {data.total.toLocaleString()} ครั้ง
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Bar dataKey="percent" radius={[0, 10, 10, 0]} barSize={32}>
+                {chartData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.percent > 10 ? '#5bafeb' : '#cbd5e1'} 
+                    className="transition-all duration-500"
+                  />
+                ))}
+                <LabelList 
+                  dataKey="percent" 
+                  position="right" 
+                  formatter={(val) => `${val}%`} 
+                  className="fill-slate-600 text-[13px] font-black" 
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-6 flex items-center gap-2">
-              <Activity size={16} /> สถิติแนวโน้ม KPI ย้อนหลัง
-            </h3>
-            <ChartLine data={currentTestData} />
+        {/* <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm border-t border-slate-50 pt-8">
+          <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-full">
+            <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.4)]"></div>
+            <span className="text-slate-600 font-semibold text-xs">ผ่านเกณฑ์ RLU (สัดส่วนปกติ)</span>
           </div>
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-6 flex items-center gap-2">
-              สถิติต้นทุนรายปีงบประมาณ
-            </h3>
-            <ChartBar data={currentTestData} />
+          <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-full">
+            <div className="w-3 h-3 bg-slate-300 rounded-full"></div>
+            <span className="text-slate-600 font-semibold text-xs">ต้องเฝ้าระวัง (ตรวจซ้ำบ่อย)</span>
           </div>
-        </div>
+        </div> */}
+      </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center gap-2">
-            <FileText size={18} className="text-slate-400" />
-            <h3 className="font-bold text-slate-700">รายละเอียดข้อมูลประกอบรายงาน</h3>
+      {/* --- Section 2: Table Card --- */}
+      <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200/60 max-w-6xl w-full flex flex-col backdrop-blur-sm overflow-hidden mb-12">
+        
+        {/* Header Table */}
+        <div className="px-8 py-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-50">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#5bafeb] to-[#4a90e2] flex items-center justify-center text-white shadow-xl shadow-[#5bafeb]/20">
+              <FileText size={24} strokeWidth={2} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800 text-xl tracking-tight">รายละเอียดตัวชี้วัดรายรายการ</h3>
+              <p className="text-slate-400 text-sm mt-0.5">จำแนกตามเกณฑ์เป้าหมายกระทรวงสาธารณสุข</p>
+            </div>
           </div>
-  <table className="w-full text-sm">
-    <thead>
-      <tr className="bg-slate-50 text-slate-500 text-[13px] font-black tracking-widest border-b border-slate-200">
-        <th className="px-6 py-4 text-left">ปีงบประมาณ</th>
-        <th className="px-6 py-4 text-right">จำนวนตรวจซ้ำ (ครั้ง)</th>
-        <th className="px-6 py-4 text-right">จำนวนทั้งหมด (ครั้ง)</th>
-        <th className="px-6 py-4 text-right">ผลสัมฤทธิ์ KPI</th>
-        <th className="px-6 py-4 text-right">งบประมาณดำเนินการ</th>
-      </tr>
-    </thead>
-    <tbody className="divide-y divide-slate-100">
-      {currentTestData.map(r => (
-        <tr key={r.year} className="hover:bg-slate-50 transition-colors">
-          <td className="px-6 py-4 font-bold text-slate-700">พ.ศ. {r.year}</td>
-          <td className="px-6 py-4 text-right">{r.repeat?.toLocaleString()}</td>
-          <td className="px-6 py-4 text-right">{r.total?.toLocaleString()}</td>
-          <td className="px-6 py-4 text-right">
-            <span className="font-bold text-blue-800 bg-blue-50 px-2 py-1 rounded border border-blue-100">
-              {r.kpi?.toFixed(2)}%
+          <div className="flex items-center gap-2 bg-[#5bafeb] px-4 py-2 rounded-xl border border-[#5bafeb]">
+            <span className="text-white text-sm font-bold">
+              ทั้งหมด {mockIndicators.length} รายการ
             </span>
-          </td>
-          <td className="px-6 py-4 text-right text-slate-600">฿{r.totalCost?.toLocaleString()}</td>
-        </tr>
-      ))}
-      {currentTestData.length === 0 && (
-        <tr>
-          <td colSpan="5" className="px-6 py-10 text-center text-slate-400 italic">ไม่พบข้อมูลในฐานข้อมูล</td>
-        </tr>
-      )}
-    </tbody>
-  </table>
-        </div>
-      </div>
-
-      {openModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 bg-[#5bafeb] text-white flex justify-between items-center">
-              <h2 className="font-bold">แบบฟอร์มบันทึกข้อมูลปีงบประมาณ</h2>
-              <button onClick={()=>setOpenModal(false)} className="text-white/70 hover:text-white transition-all text-xl">&times;</button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                  <div className='col-span-1'>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">ปี</label>
-                    <select
-                          name="year"
-                          onChange={handleChange}
-                          defaultValue=""
-                          className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all bg-slate-50 appearance-none cursor-pointer"
-                        >
-                          <option value="" disabled>เลือกปี</option>
-                          {yearList.map((y) => (
-                            <option key={y} value={y}>
-                              พ.ศ. {y}
-                            </option>
-                          ))}
-                        </select>
-                  </div>
-                                    <div className='col-span-1'>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">KPI</label>
-                    <input
-                          name="kpi"
-                          onChange={handleChange}
-                          type='number'
-                          className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all bg-slate-50 appearance-none cursor-pointer"
-                        />
-                  </div>
-                                                      <div className='col-span-1'>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">จำนวน</label>
-                    <input
-                          name="repeat"
-                          onChange={handleChange}
-                          type='number'
-                          className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all bg-slate-50 appearance-none cursor-pointer"
-                        />
-                  </div>
-                 <div className='col-span-1'>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">ตรวจทั้งหมด</label>
-                    <input
-                          name="total"
-                          onChange={handleChange}
-                          type='number'
-                          className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all bg-slate-50 appearance-none cursor-pointer"
-                        />
-                  </div>
-                                   <div className='col-span-1'>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">ทุน</label>
-                    <input
-                          name="cost"
-                          onChange={handleChange}
-                          type='number'
-                          className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all bg-slate-50 appearance-none cursor-pointer"
-                        />
-                  </div>
-                                   <div className='col-span-1'>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">ต้นทุนรวม</label>
-                    <input
-                          name="totalCost"
-                          value={totalCost}
-                          type='number'
-                          className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all bg-slate-50 appearance-none cursor-pointer"
-                        />
-                  </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 p-4 bg-slate-50 border-t border-slate-200">
-              <button onClick={()=>setOpenModal(false)} className="px-6 py-2 text-sm font-bold text-slate-600 hover:text-slate-800 transition-all">ยกเลิก</button>
-              <button onClick={saveYearData} className="px-8 py-2 bg-[#5bafeb] hover:bg-[#4a9de0] text-white rounded-lg text-sm font-bold shadow-md transition-all">
-                ยืนยันการบันทึกข้อมูล
-              </button>
-            </div>
           </div>
         </div>
-      )}
-    </div>
-  );
-};
 
-
-
-const StatCard = ({ title, value, icon, trend, trendValue, subValue }) => {
-  const isNegative = typeof trendValue === 'number' && trendValue < 0;
-  console.log("StatCard - trendValue:", trendValue, "isNegative:", isNegative);
-  return (
-    <div className="bg-white p-5 rounded-xl border">
-      <div className="flex justify-between mb-3">
-        <span className="text-sm text-slate-500">{title}</span>
-        {icon}
-      </div>
-
-      <div className="text-2xl font-bold">{value}</div>
-
-      {trend && (
-        <div
-          className={`text-xs ${
-            isNegative ? 'text-red-600' : 'text-green-600'
-          }`}
-        >
-          {trend}
+        {/* Table Content */}
+        <div className="overflow-x-auto px-4">
+          <table className="w-full">
+            <thead>
+              <tr className="text-slate-400 text-[11px] uppercase tracking-widest font-black border-b border-slate-50">
+                <th className="px-6 py-5 text-left w-24">ลำดับ</th>
+                <th className="px-4 py-5 text-left">ชื่อรายการตรวจทางห้องปฏิบัติการ</th>
+                <th className="px-4 py-5 text-center">เกณฑ์เป้าหมาย</th>
+                <th className="px-4 py-5 text-right pr-8">ผลการดำเนินงาน</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50/80">
+              {currentTestData.map((r, i) => (
+                <tr key={r.id} className="group hover:bg-slate-50/80 transition-all duration-200">
+                  <td className="px-6 py-5">
+                    <span className="bg-slate-100 text-slate-500 py-1 px-2.5 rounded-lg font-mono text-xs font-bold group-hover:bg-[#5bafeb] group-hover:text-[#5bafeb]">
+                      {(startIndex + i + 1).toString().padStart(2, '0')}
+                    </span>
+                  </td>
+                  <td className="px-4 py-5">
+                    <span className="font-bold text-slate-700 group-hover:text-[#5bafeb] transition-colors">{r.name}</span>
+                  </td>
+                  <td className="px-4 py-5 text-center">
+                    <span className="text-slate-500 font-medium text-sm italic">{r.target}</span>
+                  </td>
+                  <td className="px-4 py-5 text-right pr-8">
+                    <span className="inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-black bg-white border border-slate-200 text-slate-700 group-hover:border-[#5bafeb] ">
+                      {r.result}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
 
-      {subValue && <div className="text-xs text-slate-400">{subValue}</div>}
+        {/* Pagination */}
+        <div className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <p className="text-slate-400 text-sm font-medium">
+            กำลังแสดงหน้า <span className="text-[#5bafeb] font-bold">{currentPage}</span> จากทั้งหมด {totalPages} หน้า
+          </p>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={goToPrevPage}
+              disabled={currentPage === 1}
+              className="p-2.5 rounded-xl bg-white text-slate-400 hover:text-emerald-600 disabled:opacity-30 transition-all border border-slate-200 shadow-sm"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            
+            <div className="flex gap-1.5">
+              {[...Array(totalPages)].map((_, index) => (
+                <button
+                  key={index + 1}
+                  onClick={() => goToPage(index + 1)}
+                  className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
+                    currentPage === index + 1
+                      ? 'bg-[#5bafeb] text-white shadow-lg shadow-[#5bafeb] border-[#5bafeb]'
+                      : 'bg-white text-slate-400 hover:border-emerald-300 border border-slate-200'
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+            
+            <button
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+              className="p-2.5 rounded-xl bg-white text-slate-400 hover:text-emerald-600 disabled:opacity-30 transition-all border border-slate-200 shadow-sm"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
-
-
-const ChartLine = ({ data }) => (
-  <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
-    <h3 className="mb-6 font-bold text-slate-700 flex items-center gap-2">
-      <span className="w-1 h-5 bg-slate-400 rounded-full"></span>
-      แนวโน้มดัชนีชี้วัด (KPI Trend)
-    </h3>
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart 
-        data={data.map(d => ({ ...d, kpi: d.kpi }))} 
-        margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-        
-        <XAxis 
-          dataKey="year" 
-          axisLine={false} 
-          tickLine={false} 
-          tick={{fill: '#64748B', fontSize: 12}}
-          dy={10}
-        />
-        
-        <YAxis 
-          width={60}
-          axisLine={false} 
-          tickLine={false} 
-          tick={{fill: '#64748B', fontSize: 12}}
-          tickFormatter={(value) => `${value}%`}
-        />
-        
-        <Tooltip 
-          contentStyle={{
-            borderRadius: '8px', 
-            border: '1px solid #E2E8F0', 
-            boxShadow: 'none',
-            fontSize: '14px'
-          }}
-          formatter={(value) => [`${Number(value).toFixed(2)}%`, 'ค่า KPI']}
-        />
-        
-        <Line 
-          type="monotone" 
-          dataKey="kpi" 
-          stroke="#1E3A8A" 
-          strokeWidth={3} 
-          dot={{ r: 5, fill: '#1E3A8A', strokeWidth: 2, stroke: '#fff' }}
-          activeDot={{ r: 7, strokeWidth: 0 }}
-        />
-      </LineChart>
-    </ResponsiveContainer>
-  </div>
-);
-
-const ChartBar = ({ data }) => (
-  <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
-    <h3 className="mb-6 font-bold text-slate-700 flex items-center gap-2">
-      <span className="w-1 h-5 bg-slate-400 rounded-full"></span>
-      ต้นทุนรายปีงบประมาณ
-    </h3>
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart 
-        data={data} 
-        margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
-      >
-        <XAxis 
-          dataKey="year" 
-          axisLine={false} 
-          tickLine={false} 
-          tick={{fill: '#64748B', fontSize: 12}}
-          dy={10}
-        />
-        <YAxis 
-          width={60}
-          axisLine={false} 
-          tickLine={false} 
-          tick={{fill: '#64748B', fontSize: 12}}
-          tickFormatter={(value) => value.toLocaleString()}
-        />
-        <Tooltip 
-          cursor={{fill: '#F8FAFC'}} 
-          contentStyle={{
-            borderRadius: '8px', 
-            border: '1px solid #E2E8F0', 
-            boxShadow: 'none',
-            fontSize: '14px'
-          }}
-          formatter={(value) => [value.toLocaleString(), 'ต้นทุน']}
-        />
-        <Bar dataKey="totalCost" radius={[4, 4, 0, 0]} barSize={40}>
-          {data.map((_, i) => (
-            <Cell 
-              key={i} 
-              fill={i === data.length - 1 ? '#1E3A8A' : '#CBD5E1'} 
-            />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-  </div>
-);
 
 
 export default App;
