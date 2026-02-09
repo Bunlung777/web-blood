@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { FileText, ChevronLeft, ChevronRight, MoreHorizontal, ArrowUpRight,ArrowLeft,Home,LayoutGrid } from 'lucide-react';
+import React, { useState} from 'react';
+import { FileText, ChevronLeft, ChevronRight,ArrowLeft,Home,LayoutGrid } from 'lucide-react';
 import {
   BarChart,
   Bar,
