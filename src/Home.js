@@ -2,13 +2,12 @@ import { useNavigate } from "react-router-dom";
 import React from "react";
 import { Activity, BarChart3, ChevronRight } from "lucide-react"; // ลงเพิ่ม: npm install lucide-react
 import logo from "./image/Unknown.jpg";
-
 const Home = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-kanit text-slate-800">
-      
+
       {/* ===== Header with Gradient ===== */}
       <header className="bg-gradient-to-r from-[#5bafeb] to-[#0683dd] text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-8 flex items-center gap-6">

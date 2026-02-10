@@ -1,5 +1,5 @@
 import React, { useState} from 'react';
-import { FileText, ChevronLeft, ChevronRight,ArrowLeft,Home,LayoutGrid } from 'lucide-react';
+import { FileText, ChevronLeft, ChevronRight,LayoutGrid } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -12,6 +12,7 @@ import {
   LabelList
 } from 'recharts';
 import { useNavigate } from "react-router-dom";
+import Navbar from './Navbar';
 const App = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -131,43 +132,27 @@ const chartData = [
   };
 
 return (
+<div>
+       <Navbar />
 
     <div className="flex flex-col items-center p-4 md:p-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 min-h-screen font-kanit gap-6">
-      
       {/* ===== Top Navigation Bar ===== */}
-      <div className="max-w-6xl w-full flex flex-col md:flex-row justify-between items-center gap-4 mb-2">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate("/")}
-            className="p-2.5 bg-white rounded-2xl shadow-sm border border-slate-200 text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-all active:scale-95"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <div>
-            <h1 className="text-xl font-bold text-slate-800">ตัวชี้วัดโรงพยาบาล</h1>
-            <p className="text-xs text-slate-500">RLU Dashboard / Hospital Indicators</p>
-          </div>
+{/* ===== 1. Page Header Section (เพิ่มส่วนนี้) ===== */}
+      <div className="w-full max-w-6xl flex flex-col md:flex-row justify-between items-end md:items-center gap-4 mb-2">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Hospital Dashboard</h1>
+          <p className="text-slate-500 text-sm">ภาพรวมข้อมูลการตรวจทางห้องปฏิบัติการ</p>
         </div>
-
-        <div className="flex items-center gap-2 bg-white/60 p-1.5 rounded-2xl border border-white/80 shadow-sm">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:bg-white hover:text-slate-800 rounded-xl transition-all text-sm font-medium"
-          >
-            <Home size={16} />
-            <span>หน้าแรก</span>
-          </button>
-          <div className="w-[1px] h-4 bg-slate-300 mx-1"></div>
-          <button
-            onClick={() => navigate("/Government")}
-            className="flex items-center gap-2 bg-[#5bafeb] px-4 py-2 rounded-xl shadow-md shadow-[#5bafeb] text-white hover:bg-[#4a90e2] transition-all active:scale-95 text-sm font-semibold"
-          >
-            <LayoutGrid size={16} />
-            <span>ตัวชี้วัดราชการ</span>
-          </button>
-        </div>
+        
+        {/* ปุ่มของคุณ */}
+        <button
+          onClick={() => navigate("/Government")}
+          className="flex items-center gap-2 bg-white text-[#5bafeb] border border-[#5bafeb] px-5 py-2.5 rounded-xl shadow-sm hover:bg-[#5bafeb] hover:text-white hover:shadow-md transition-all active:scale-95 text-sm font-bold group"
+        >
+          <LayoutGrid size={18} className="group-hover:rotate-180 transition-transform duration-500"/>
+          <span>ตัวชี้วัดราชการ</span>
+        </button>
       </div>
-
       {/* --- Section 1: Chart Card --- */}
       <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200/60 max-w-6xl w-full p-6 md:p-10 backdrop-blur-sm relative overflow-hidden">
         {/* ตกแต่งพื้นหลังเล็กน้อย */}
@@ -340,6 +325,7 @@ return (
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

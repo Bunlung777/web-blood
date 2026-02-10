@@ -3,11 +3,11 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, BarChart, Bar, Cell
 } from 'recharts';
-import { Activity, TrendingDown, FileText, ClipboardList } from 'lucide-react';
+import { Activity, TrendingDown, FileText } from 'lucide-react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, getDocs,setDoc,doc,serverTimestamp } from 'firebase/firestore';
 import { firebaseConfig } from './firebase';
-
+import Navbar from './Navbar';
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const App = () => {
@@ -92,8 +92,11 @@ console.log("cuerrentTestData:", currentTestData);
 const currentYear = new Date().getFullYear() + 543;
 const yearList = Array.from({ length: 5 }, (_, i) => currentYear + i);
 return (
+  <div>
+    <Navbar />
+
     <div className="min-h-screen bg-slate-50 text-slate-800 font-kanit">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+      {/* <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
@@ -106,16 +109,16 @@ return (
             </div>
           </div>
           
-          {/* <button
+          <button
             onClick={() => setOpenModal(true)}
             className="flex items-center gap-2 px-6 py-2.5 bg-[#5bafeb] hover:bg-[#4a9de0] text-white rounded-lg font-bold shadow-sm transition-all text-sm"
           >
             <Plus size={18} />
             เพิ่มข้อมูล
-          </button> */}
+          </button>
         </div>
       </div>
-</header>
+</header> */}
 
       <div className="max-w-7xl mx-auto p-6 space-y-8">
       
@@ -301,6 +304,7 @@ return (
         </div>
       )}
     </div>
+      </div>
   );
 };
 
@@ -384,6 +388,7 @@ const ChartLine = ({ data }) => (
       </LineChart>
     </ResponsiveContainer>
   </div>
+  
 );
 
 const ChartBar = ({ data }) => (
