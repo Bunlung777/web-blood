@@ -1,11 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { collection, query, where, getDocs,getFirestore } from "firebase/firestore";
-import { firebaseConfig } from './firebase';
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { collection, query, where, getDocs, getFirestore } from "firebase/firestore";
+import { firebaseConfig } from "./firebase";
 import logo from "./image/Unknown.jpg";
+
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
 const Login = () => {
   const navigate = useNavigate();
 
@@ -14,10 +16,17 @@ const Login = () => {
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
+    setError("");
+
+    if (!name || !password) {
+      setError("กรุณากรอกข้อมูลให้ครบ");
+      return;
+    }
+
     try {
       const q = query(
         collection(db, "User"),
-        where("Name", "==", name)
+        where("Name", "==", name.trim())
       );
 
       const querySnapshot = await getDocs(q);
@@ -37,7 +46,10 @@ const Login = () => {
       });
 
       if (isValid) {
-        navigate("/"); // ไปหน้าอื่น
+        localStorage.setItem("isLogin", "true");
+        localStorage.setItem("username", name);
+
+        navigate("/");
       } else {
         setError("รหัสผ่านไม่ถูกต้อง");
       }
@@ -116,12 +128,26 @@ const Login = () => {
           </div>
         )}
 
-        <button
-          onClick={handleLogin}
-          className="w-full bg-gradient-to-r from-[#5bafeb] to-[#0683dd] text-white py-2.5 rounded-lg font-medium hover:shadow-lg hover:shadow-blue-500/30 transform hover:-translate-y-0.5 transition-all duration-200 mt-2"
-        >
-          เข้าสู่ระบบ
-        </button>
+        <div className="space-y-3 pt-2">
+          <button
+            onClick={handleLogin}
+            className="w-full bg-gradient-to-r from-[#5bafeb] to-[#0683dd] text-white py-2.5 rounded-lg font-medium shadow-md hover:shadow-blue-200 transform hover:-translate-y-0.5 transition-all duration-200"
+          >
+            เข้าสู่ระบบ
+          </button>
+
+          {/* ปุ่มสำหรับ Guest ตกแต่งแบบ Outline ให้ดูไม่แย่งซีนปุ่มหลัก */}
+          <button
+         onClick={() => navigate("/")}
+            className="w-full bg-white border-2 border-slate-100 text-slate-500 py-2.5 rounded-lg font-medium hover:bg-slate-50 hover:border-slate-200 hover:text-slate-600 transition-all duration-200 flex items-center justify-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            เข้าใช้งานแบบผู้เยี่ยมชม
+          </button>
+        </div>
       </div>
     </div>
   </main>

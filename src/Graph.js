@@ -173,11 +173,13 @@ const monthList = [
   { value: "11", label: "พฤศจิกายน" },
   { value: "12", label: "ธันวาคม" },
 ];
+const isLogin = localStorage.getItem("isLogin") === "true";
 return (
   <div>
     <Navbar />
 
     <div className="min-h-screen bg-slate-50 text-slate-800 font-kanit">
+      {isLogin && 
       <header className="">
       <div className="">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">         
@@ -191,6 +193,7 @@ return (
         </div>
       </div>
 </header>
+}
 
       <div className="max-w-7xl mx-auto p-6 space-y-8">
       

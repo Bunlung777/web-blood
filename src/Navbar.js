@@ -1,10 +1,19 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Activity, BarChart3, Home, Menu, X } from "lucide-react";
-
+import { Activity, BarChart3, Home, Menu, X,LogIn,LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);;
-
+const isLogin = localStorage.getItem("isLogin") === "true";
+const navigate = useNavigate();
+const handleMenuClick = (item) => {
+  if (item.action === "logout") {
+    localStorage.removeItem("isLogin");
+    navigate("/Login");
+  } else if (item.path) {
+    navigate(item.path);
+  }
+};
   // กำหนดรายการเมนูตาม Path ที่คุณระบุ
   const menuItems = [
     { 
@@ -22,6 +31,18 @@ const Navbar = () => {
       name: "ตัวชี้วัดโรงพยาบาล", 
       icon: <BarChart3 size={20} /> 
     },
+  isLogin
+    ? {
+        name: "Logout",
+        icon: <LogOut size={20} />,
+        action: "logout",
+                path: "/Login",
+      }
+    : {
+        path: "/Login",
+        name: "Login",
+        icon: <LogIn size={20} />,
+      },
   ];
 
   // ฟังก์ชันสำหรับปิดเมนูมือถือเมื่อกดลิงก์
@@ -50,6 +71,7 @@ const Navbar = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={() => handleMenuClick(item)}
                 className={({ isActive }) =>
                   `flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                     isActive
