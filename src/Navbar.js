@@ -17,7 +17,7 @@ const handleMenuClick = (item) => {
   // กำหนดรายการเมนูตาม Path ที่คุณระบุ
   const menuItems = [
     { 
-      path: "/", 
+      path: "/Home", 
       name: "หน้าหลัก", 
       icon: <Home size={20} /> 
     },
@@ -36,10 +36,10 @@ const handleMenuClick = (item) => {
         name: "Logout",
         icon: <LogOut size={20} />,
         action: "logout",
-                path: "/Login",
+                path: "/",
       }
     : {
-        path: "/Login",
+        path: "/",
         name: "Login",
         icon: <LogIn size={20} />,
       },
@@ -55,7 +55,7 @@ const handleMenuClick = (item) => {
           
           {/* Logo / Brand Name */}
           <div className="flex items-center">
-            <NavLink to="/" className="flex-shrink-0 flex items-center gap-2">
+            <NavLink to="/Home" className="flex-shrink-0 flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#5bafeb] to-[#0683dd] flex items-center justify-center text-white font-bold text-lg">
                 R
               </div>
