@@ -7,6 +7,8 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Government from './government';
 import Home from './Home';
+import Login from './Login';
+
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <Routes>
@@ -14,6 +16,7 @@ createRoot(document.getElementById('root')).render(
       <Route path="/Graph" element={<Graph />} />
       <Route path="/Government" element={<Government />} />
       <Route path="/" element={<Home />} />
+      <Route path="/Login" element={<Login />} />
     </Routes>
   </BrowserRouter>
 );
