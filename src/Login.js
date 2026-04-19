@@ -49,7 +49,7 @@ const Login = () => {
         localStorage.setItem("isLogin", "true");
         localStorage.setItem("username", name);
 
-        navigate("/");
+        navigate("/Home");
       } else {
         setError("รหัสผ่านไม่ถูกต้อง");
       }
