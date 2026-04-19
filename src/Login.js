@@ -138,7 +138,7 @@ const Login = () => {
 
           {/* ปุ่มสำหรับ Guest ตกแต่งแบบ Outline ให้ดูไม่แย่งซีนปุ่มหลัก */}
           <button
-         onClick={() => navigate("/")}
+         onClick={() => navigate("/Home")}
             className="w-full bg-white border-2 border-slate-100 text-slate-500 py-2.5 rounded-lg font-medium hover:bg-slate-50 hover:border-slate-200 hover:text-slate-600 transition-all duration-200 flex items-center justify-center gap-2"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
