@@ -3,14 +3,14 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, BarChart, Bar, Cell
 } from 'recharts';
-import { Activity, TrendingDown, FileText } from 'lucide-react';
+import { Activity, TrendingDown, FileText,ClipboardList,Plus } from 'lucide-react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, getDocs,setDoc,doc,serverTimestamp } from 'firebase/firestore';
 import { firebaseConfig } from './firebase';
 import Navbar from './Navbar';
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const App = () => {
+const Graph = () => {
   const [data, setData] = useState([]);
   const [selectedTest, setSelectedTest] = useState('HbA1C');
   const [openModal, setOpenModal] = useState(false);
@@ -25,53 +25,96 @@ const [form, setForm] = useState({
 const handleChange = e => {
   setForm({ ...form, [e.target.name]: e.target.value });
 };
-const totalCost = (Number(form.cost) || 0) * (Number(form.repeat) || 0);
+  const calculatedTotalCost = (Number(form.cost) || 0) * (Number(form.repeat) || 0);
 
 
-  useEffect(() => {
-    const load = async () => {
-      const hospitalId = 'loei';
-      const testsSnap = await getDocs(
-        collection(db, 'hospitals', hospitalId, 'tests')
+useEffect(() => {
+  loadData();
+}, []);
+
+const loadData = async () => {
+  const hospitalId = 'loei';
+
+  const testsSnap = await getDocs(
+    collection(db, 'hospitals', hospitalId, 'tests')
+  );
+
+  const all = [];
+
+  for (const t of testsSnap.docs) {
+    const yearsSnap = await getDocs(
+      collection(db, 'hospitals', hospitalId, 'tests', t.id, 'years')
+    );
+
+    const yearsData = [];
+
+    for (const y of yearsSnap.docs) {
+      const monthsSnap = await getDocs(
+        collection(
+          db,
+          'hospitals',
+          hospitalId,
+          'tests',
+          t.id,
+          'years',
+          y.id,
+          'months'
+        )
       );
 
-      const all = [];
+      const months = monthsSnap.docs.map(m => ({
+        month: m.id,
+        ...m.data()
+      }));
 
-      for (const t of testsSnap.docs) {
-        const yearsSnap = await getDocs(
-          collection(db, 'hospitals', hospitalId, 'tests', t.id, 'years')
-        );
+      console.log("YEAR:", y.id, "MONTHS:", months); 
 
-        all.push({
-          test: t.id,
-          years: yearsSnap.docs
-            .map(y => ({ year: y.id, ...y.data() }))
-            .sort((a, b) => Number(a.year) - Number(b.year)),
-        });
-      }
+      yearsData.push({
+        year: y.id,
+        months: months || []
+      });
+    }
 
-      setData(all);
-    };
+    all.push({
+      test: t.id,
+      years: yearsData
+    });
+  }
 
-    load();
-  }, []);
+  setData(all);
+};
 const saveYearData = async () => {
   const hospitalId = "loei";
   const testId = selectedTest;
   const yearId = form.year;
+  const monthId = form.month;
+
+  const calculatedTotalCost =
+    (Number(form.cost) || 0) * (Number(form.repeat) || 0);
 
   await setDoc(
-    doc(db, "hospitals", hospitalId, "tests", testId, "years", yearId),
+    doc(
+      db,
+      "hospitals",
+      hospitalId,
+      "tests",
+      testId,
+      "years",
+      yearId,
+      "months",
+      monthId 
+    ),
     {
       kpi: Number(form.kpi),
       repeat: Number(form.repeat),
       total: Number(form.total),
       cost: Number(form.cost),
-      totalCost: Number(form.totalCost),
-      createdAt: serverTimestamp(), 
+      totalCost: calculatedTotalCost,
+      createdAt: serverTimestamp(),
     }
   );
 
+  await loadData();
   setOpenModal(false);
 };
 
@@ -79,7 +122,32 @@ const saveYearData = async () => {
     return data.find(d => d.test === selectedTest)?.years ?? [];
   }, [data, selectedTest]);
   console.log("Current Test Data:", currentTestData);
+const yearlySummary = useMemo(() => {
+  const years = data.find(d => d.test === selectedTest)?.years ?? [];
 
+  return years.map(y => {
+    const months = y.months ?? [];
+
+    const sumRepeat = months.reduce((sum, m) => sum + (m.repeat || 0), 0);
+    const sumTotal = months.reduce((sum, m) => sum + (m.total || 0), 0);
+    const sumCost = months.reduce((sum, m) => sum + (m.cost || 0), 0);
+    const sumTotalCost = months.reduce((sum, m) => sum + (m.totalCost || 0), 0);
+
+    const avgKpi =
+      months.length > 0
+        ? months.reduce((sum, m) => sum + (m.kpi || 0), 0) / months.length
+        : 0;
+
+    return {
+      year: y.year,
+      repeat: sumRepeat,
+      total: sumTotal,
+      cost: sumCost,
+      totalCost: sumTotalCost,
+      kpi: avgKpi,
+    };
+  }).sort((a, b) => Number(a.year) - Number(b.year));
+}, [data, selectedTest]);
   const kpiImprovement = useMemo(() => {
     if (currentTestData.length < 2) return null;
     const latest = currentTestData.at(-1);
@@ -91,24 +159,28 @@ console.log("cuerrentTestData:", currentTestData);
 
 const currentYear = new Date().getFullYear() + 543;
 const yearList = Array.from({ length: 5 }, (_, i) => currentYear + i);
+const monthList = [
+  { value: "01", label: "มกราคม" },
+  { value: "02", label: "กุมภาพันธ์" },
+  { value: "03", label: "มีนาคม" },
+  { value: "04", label: "เมษายน" },
+  { value: "05", label: "พฤษภาคม" },
+  { value: "06", label: "มิถุนายน" },
+  { value: "07", label: "กรกฎาคม" },
+  { value: "08", label: "สิงหาคม" },
+  { value: "09", label: "กันยายน" },
+  { value: "10", label: "ตุลาคม" },
+  { value: "11", label: "พฤศจิกายน" },
+  { value: "12", label: "ธันวาคม" },
+];
 return (
   <div>
     <Navbar />
 
     <div className="min-h-screen bg-slate-50 text-slate-800 font-kanit">
-      {/* <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-[#5bafeb] p-2 rounded-lg text-white">
-              <ClipboardList size={24} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">แดชบอร์ดสรุปตัวชี้วัด (KPI)</h1>
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">รายงานการตรวจซ้ำและต้นทุน ปี 2563 - 2567</p>
-            </div>
-          </div>
-          
+      <header className="">
+      <div className="">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">         
           <button
             onClick={() => setOpenModal(true)}
             className="flex items-center gap-2 px-6 py-2.5 bg-[#5bafeb] hover:bg-[#4a9de0] text-white rounded-lg font-bold shadow-sm transition-all text-sm"
@@ -118,7 +190,7 @@ return (
           </button>
         </div>
       </div>
-</header> */}
+</header>
 
       <div className="max-w-7xl mx-auto p-6 space-y-8">
       
@@ -173,13 +245,13 @@ return (
             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-6 flex items-center gap-2">
               <Activity size={16} /> สถิติแนวโน้ม KPI ย้อนหลัง
             </h3>
-            <ChartLine data={currentTestData} />
+            <ChartLine data={yearlySummary} />
           </div>
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-6 flex items-center gap-2">
               สถิติต้นทุนรายปีงบประมาณ
             </h3>
-            <ChartBar data={currentTestData} />
+            <ChartBar data={yearlySummary} />
           </div>
         </div>
 
@@ -199,7 +271,7 @@ return (
       </tr>
     </thead>
     <tbody className="divide-y divide-slate-100">
-      {currentTestData.map(r => (
+      {yearlySummary.map(r => (
         <tr key={r.year} className="hover:bg-slate-50 transition-colors">
           <td className="px-6 py-4 font-bold text-slate-700">พ.ศ. {r.year}</td>
           <td className="px-6 py-4 text-right">{r.repeat?.toLocaleString()}</td>
@@ -212,7 +284,7 @@ return (
           <td className="px-6 py-4 text-right text-slate-600">฿{r.totalCost?.toLocaleString()}</td>
         </tr>
       ))}
-      {currentTestData.length === 0 && (
+      {yearlySummary.length === 0 && (
         <tr>
           <td colSpan="5" className="px-6 py-10 text-center text-slate-400 italic">ไม่พบข้อมูลในฐานข้อมูล</td>
         </tr>
@@ -247,6 +319,26 @@ return (
                           ))}
                         </select>
                   </div>
+                      <div className='col-span-1'>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">
+                          เดือน
+                        </label>
+
+                        <select
+                          name="month"
+                          onChange={handleChange}
+                          defaultValue=""
+                          className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all bg-slate-50 appearance-none cursor-pointer"
+                        >
+                          <option value="" disabled>เลือกเดือน</option>
+
+                          {monthList.map((m) => (
+                            <option key={m.value} value={m.value}>
+                              {m.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                                     <div className='col-span-1'>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">KPI</label>
                     <input
@@ -287,7 +379,8 @@ return (
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">ต้นทุนรวม</label>
                     <input
                           name="totalCost"
-                          value={totalCost}
+                          value={calculatedTotalCost}
+                          readOnly
                           type='number'
                           className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all bg-slate-50 appearance-none cursor-pointer"
                         />
@@ -440,4 +533,4 @@ const ChartBar = ({ data }) => (
 );
 
 
-export default App;
+export default Graph;
